@@ -1,5 +1,5 @@
 {
-  "name": "amarsomani/usedb-laravel",
+  "name": "usedbjs/laravel-usedb",
   "description": "Generic CRUD operation",
   "type": "library",
   "autoload": {
