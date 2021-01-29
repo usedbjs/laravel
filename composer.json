@@ -1,0 +1,27 @@
+{
+  "name": "amarsomani/usedb-laravel",
+  "description": "Generic CRUD operation",
+  "type": "library",
+  "autoload": {
+    "psr-4": {
+      "UseDB\\": "src/UseDB/"
+    }
+  },
+  "extra": {
+    "laravel": {
+      "providers": [
+        "UseDB\\UseDBServiceProvider"
+      ]
+    }
+  },
+  "require-dev": {
+    "orchestra/testbench": "^3.8"
+  },
+  "authors": [
+    {
+      "name": "Nishan Bende",
+      "email": "nishanb@geekyants.com"
+    }
+  ],
+  "require": {}
+}
