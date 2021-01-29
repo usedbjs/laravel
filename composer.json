@@ -1,5 +1,5 @@
 {
-  "name": "usedbjs/laravel-usedb",
+  "name": "geekyants/laravel-usedb",
   "description": "Generic CRUD operation",
   "type": "library",
   "autoload": {
