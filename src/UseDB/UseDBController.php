@@ -7,7 +7,6 @@ use Illuminate\Http\Request;
 
 class UseDBController extends Controller
 {
-
     public $modelClass;
 
     public function index(Request $request)
@@ -44,6 +43,7 @@ class UseDBController extends Controller
         }
 
         $modelCollection = new $this->modelClass();
+
         if (array_key_exists('where', $payload)) {
             $modelCollection = $this->modelClass::where($payload['where']);
         }
@@ -58,10 +58,13 @@ class UseDBController extends Controller
         if (!array_key_exists('data', $payload)) {
             return ['error' => 'Data field in payload is required'];
         }
-        $data = $payload['data'];
 
+        $data = $payload['data'];
         $model = new $this->modelClass();
-        $model->fill($data);
+
+        foreach ($data as $prop => $value) {
+            $model->$prop = $value;
+        }
 
         if (!$model->save()) {
             return response()->json(['errors' => $model->getErrors()]);
@@ -75,9 +78,10 @@ class UseDBController extends Controller
         if (!array_key_exists('where', $payload)) {
             return ['error' => 'where field in payload is required'];
         }
-        $where =  $payload['where'];
 
+        $where =  $payload['where'];
         $model = $this->modelClass::where($where)->first();
+
         if (!$model)
             return response()->json(["error" => "Record not found!!"]);
         return response()->json($model);
@@ -98,12 +102,14 @@ class UseDBController extends Controller
         }
 
         $where =  $payload['where'];
-
         $model = $this->modelClass::where($where)->first();
         if (!$model)
             return response()->json(["error" => "Record not found"]);
 
-        $model->fill($payload['data']);
+        $data = $payload['data'];
+        foreach ($data as $prop => $value) {
+            $model->$prop = $value;
+        }
 
         if (!$model->save()) {
             return response()->json(["errors" => $model->getErrors()]);
@@ -118,6 +124,7 @@ class UseDBController extends Controller
             return ['error' => 'where field in payload is required'];
         }
         $where =  $payload['where'];
+
         $model = $this->modelClass::where($where)->first();
         if (!$model)
             return response()->json(["error" => "Record not found"]);
