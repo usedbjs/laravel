@@ -24,17 +24,12 @@ class UseDBServiceProvider extends ServiceProvider
      */
     public function boot()
     {
+        $this->loadRoutesFrom(__DIR__ . '/routes.php');
         app('router')->aliasMiddleware('usedb', UseDB::class);
         app('router')->aliasMiddleware('model-usedb', Model::class);
 
         $this->publishes([
             __DIR__ . '/config/usedb.php' => config_path('usedb.php'),
         ], 'config');
-
-        Route::group([
-            'middleware' => config('usedb.middleware'),
-        ], function () {
-            $this->loadRoutesFrom(__DIR__ . '/routes.php');
-        });
     }
 }

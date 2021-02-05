@@ -34,7 +34,7 @@ class Model
             $where = $payload['where'];
             foreach ($where as $prop => $value) {
                 if (!in_array($prop, $properties)) {
-                    $errors['where'][$prop] = 'Property \'' . $prop . '\' provided in the where field doesn\'t exists 1234 in ' . $collection;
+                    $errors['where'][$prop] = 'Property \'' . $prop . '\' provided in the where field doesn\'t exists in ' . $collection;
                 }
             }
         }
