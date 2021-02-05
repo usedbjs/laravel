@@ -1,6 +1,11 @@
 {
   "name": "geekyants/laravel-usedb",
   "description": "Generic CRUD operation",
+  "keywords": [
+    "geekyants",
+    "usedb",
+    "laravel-usedb"
+  ],
   "type": "library",
   "license": "proprietary",
   "autoload": {
@@ -22,6 +27,10 @@
     {
       "name": "Nishan Bende",
       "email": "nishanb@geekyants.com"
+    },
+    {
+      "name": "Amar Somani",
+      "email": "amars@geekyants.com"
     }
   ],
   "require": {
