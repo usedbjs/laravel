@@ -163,30 +163,6 @@ class UseDBController extends Controller
         if (!$model)
             return response()->json(["error" => "Record not found"]);
 
-        $gates = config('usedb.permissions.gates.' . $obj['collection'] . '.update');
-        if (isEmpty($gates)) {
-            foreach ($gates as $gate) {
-                if (!Gate::allows($gate, $model)) {
-                    return response()->json(["error" => "You are not authorized"]);
-                }
-            }
-        }
-
-        // $gate = config('usedb.permissions.gates.' . $obj['collection'] . '.update');
-        // if ($gate) {
-        //     if (!Gate::allows($gate, $model)) {
-        //         return response()->json(["error" => "You are not authorized"]);
-        //     }
-        // }
-
-        $updatePolicy = config('usedb.permissions.policies.' . $obj['collection'] . '.update');
-        if ($updatePolicy) {
-            if (!Gate::allows($updatePolicy, $model)) {
-                return response()->json(["error" => "You are not authorized"]);
-            }
-        }
-
-
         $data = $payload['data'];
         foreach ($data as $prop => $value) {
             $model->$prop = $value;
@@ -210,22 +186,6 @@ class UseDBController extends Controller
         $model = $this->modelClass::where($where)->first();
         if (!$model)
             return response()->json(["error" => "Record not found"]);
-
-        $gates = config('usedb.permissions.gates.' . $obj['collection'] . '.delete');
-        if (isEmpty($gates)) {
-            foreach ($gates as $gate) {
-                if (!Gate::allows($gate, $model)) {
-                    return response()->json(["error" => "You are not authorized"]);
-                }
-            }
-        }
-
-        $updatePolicy = config('usedb.permissions.policies.' . $obj['collection'] . '.delete');
-        if ($updatePolicy) {
-            if (!Gate::allows($updatePolicy, $model)) {
-                return response()->json(["error" => "You are not authorized"]);
-            }
-        }
 
         $model->delete();
         return response()->json(["message" => "Record deleted successfully"]);
