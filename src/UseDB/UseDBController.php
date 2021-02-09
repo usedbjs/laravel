@@ -54,6 +54,7 @@ class UseDBController extends Controller
 
         $modelCollection = $modelCollection->get();
 
+
         $gates = config('usedb.permissions.gates.' . $obj['collection'] . '.findMany');
         if (isEmpty($gates)) {
             foreach ($gates as $gate) {
@@ -70,6 +71,7 @@ class UseDBController extends Controller
                 return response()->json(["error" => "You are not authorized to view the data"]);
             }
         }
+
 
 
         if (array_key_exists('include', $payload)) {
@@ -132,6 +134,7 @@ class UseDBController extends Controller
         if (!$model)
             return response()->json(["error" => "Record not found!!"]);
 
+
         $gates = config('usedb.permissions.gates.' . $obj['collection'] . '.findOne');
         if (isEmpty($gates)) {
             foreach ($gates as $gate) {
@@ -147,6 +150,7 @@ class UseDBController extends Controller
                 return response()->json(["error" => "You are not authorized to view the data"]);
             }
         }
+
 
         if (array_key_exists('include', $payload)) {
             $childClasses = $payload['include'];
