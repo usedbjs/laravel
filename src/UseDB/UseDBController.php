@@ -52,7 +52,14 @@ class UseDBController extends Controller
         $total = $modelCollection->count();
         $modelCollection = $modelCollection->skip($payload['skip'])->take($payload['take']);
 
-        return response()->json(['data' => $modelCollection->get(), 'pagination' => ['total' => $total]]);
+        $modelCollection = $modelCollection->get();
+        if (array_key_exists('include', $payload)) {
+            for ($i = 0; $i < count($modelCollection); $i++) {
+                $modelCollection[$i] =  $this->nestedData($payload['include'],  $modelCollection[$i]);
+            }
+        }
+
+        return response()->json(['data' => $modelCollection, 'pagination' => ['total' => $total]]);
     }
 
     public function store($obj)
@@ -88,7 +95,51 @@ class UseDBController extends Controller
 
         if (!$model)
             return response()->json(["error" => "Record not found!!"]);
+
+        if (array_key_exists('include', $payload)) {
+            $childClasses = $payload['include'];
+            $model = $this->nestedData($childClasses, $model);
+        }
+
         return response()->json($model);
+    }
+
+
+
+    public function nestedData($childClasses, $model)
+    {
+
+        foreach ($childClasses as $childClassName => $props) {
+            $data = $model->$childClassName();
+
+            if (array_key_exists('where', $props)) {
+                $where = $props['where'];
+                $data = $data->where($where);
+            }
+            $data = $data->get();
+
+            if (array_key_exists('include', $props)) {
+                for ($i = 0; $i < count($data); $i++) {
+                    $data[$i] =  $this->nestedData($props['include'],  $data[$i]);
+                }
+            }
+
+            if (array_key_exists('select', $props)) {
+                $select = $props['select'];
+                if (array_key_exists('include', $props)) {
+                    foreach ($props['include'] as $name => $value) {
+                        array_push($select, $name);
+                    }
+                }
+                \Log::info(print_r($select, true));
+                $data = $data->map(function ($record) use ($select) {
+                    return  $record->only($select);
+                });
+            }
+
+            $model->$childClassName = $data;
+        }
+        return $model;
     }
 
 
