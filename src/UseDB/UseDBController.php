@@ -53,6 +53,12 @@ class UseDBController extends Controller
         $modelCollection = $modelCollection->skip($payload['skip'])->take($payload['take']);
 
         $modelCollection = $modelCollection->get();
+
+        if (!($this->permission($obj, $this->modelClass, 'findMany') && $this->policies($obj, 'findMany', $this->modelClass))) {
+            return response()->json(["error" => "You are not authorized"]);
+        }
+
+
         if (array_key_exists('include', $payload)) {
             for ($i = 0; $i < count($modelCollection); $i++) {
                 $modelCollection[$i] =  $this->nestedData($payload['include'],  $modelCollection[$i]);
@@ -64,6 +70,10 @@ class UseDBController extends Controller
 
     public function store($obj)
     {
+        if (!($this->permission($obj, null, 'create') && $this->policies($obj, 'create', $this->modelClass))) {
+            return response()->json(["error" => "You are not authorized"]);
+        }
+
         $payload = $obj['payload'];
         if (!array_key_exists('data', $payload)) {
             return ['error' => 'Data field in payload is required'];
@@ -92,9 +102,12 @@ class UseDBController extends Controller
 
         $where =  $payload['where'];
         $model = $this->modelClass::where($where)->first();
-
         if (!$model)
             return response()->json(["error" => "Record not found!!"]);
+
+        if (!($this->permission($obj, $model, 'findOne') && $this->policies($obj, 'findOne', $model))) {
+            return response()->json(["error" => "You are not authorized"]);
+        }
 
         if (array_key_exists('include', $payload)) {
             $childClasses = $payload['include'];
@@ -131,7 +144,7 @@ class UseDBController extends Controller
                         array_push($select, $name);
                     }
                 }
-                \Log::info(print_r($select, true));
+
                 $data = $data->map(function ($record) use ($select) {
                     return  $record->only($select);
                 });
@@ -163,6 +176,10 @@ class UseDBController extends Controller
         if (!$model)
             return response()->json(["error" => "Record not found"]);
 
+        if (!($this->permission($obj, $model, 'update') && $this->policies($obj, 'update', $model))) {
+            return response()->json(["error" => "You are not authorized"]);
+        }
+
         $data = $payload['data'];
         foreach ($data as $prop => $value) {
             $model->$prop = $value;
@@ -187,7 +204,37 @@ class UseDBController extends Controller
         if (!$model)
             return response()->json(["error" => "Record not found"]);
 
+        if (!($this->permission($obj, $model, 'delete') && $this->policies($obj, 'delete', $model))) {
+            return response()->json(["error" => "You are not authorized"]);
+        }
+
         $model->delete();
         return response()->json(["message" => "Record deleted successfully"]);
+    }
+
+    public function permission($obj, $model, $gate)
+    {
+
+        $gates = config('usedb.permissions.gates.' . $obj['collection'] . '.' . $gate);
+        if (!$gates) {
+            return true;
+        }
+        foreach ($gates as $gate) {
+            if (!Gate::allows($gate, $model)) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    public function policies($obj, $name, $model)
+    {
+        $policy = config('usedb.permissions.policies.' . $obj['collection'] . '.' . $name);
+        if ($policy) {
+            if (!Gate::allows($policy, $model)) {
+                return false;
+            }
+        }
+        return true;
     }
 }

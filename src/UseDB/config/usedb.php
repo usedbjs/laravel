@@ -5,5 +5,32 @@ return [
         'usedb',
         'model-usedb',
     ],
-    "modelPath" => "App\Models\\"
+    "modelPath" => "App\Models\\",
+    'permissions' => [
+        'gates' => [
+
+            // structure
+
+            // 'modelName' => [
+            //     'update' => [],
+            //     'delete' => [],
+            //     'create' => [],
+            //     'findOne' => [],
+            //     'findMany' => []
+            // ]
+
+        ],
+        'policies' => [
+
+            // structure
+
+            // 'modelName' => [
+            //     'update' => '',
+            //     'delete' => '',
+            //     'create' => '',
+            //     'findOne' => '',
+            //     'findMany' => ''
+            // ]
+        ]
+    ]
 ];
