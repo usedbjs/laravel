@@ -54,24 +54,9 @@ class UseDBController extends Controller
 
         $modelCollection = $modelCollection->get();
 
-
-        $gates = config('usedb.permissions.gates.' . $obj['collection'] . '.findMany');
-        if (isEmpty($gates)) {
-            foreach ($gates as $gate) {
-                if (!Gate::allows($gate)) {
-                    return response()->json(["error" => "You are not authorized to view the data"]);
-                }
-            }
+        if (!($this->permission($obj, $this->modelClass, 'findMany') && $this->policies($obj, 'findMany', $this->modelClass))) {
+            return response()->json(["error" => "You are not authorized"]);
         }
-
-        $createPolicy = config('usedb.permissions.policies.' . $obj['collection'] . '.findMany');
-
-        if ($createPolicy) {
-            if (!Gate::allows($createPolicy, $this->modelClass)) {
-                return response()->json(["error" => "You are not authorized to view the data"]);
-            }
-        }
-
 
 
         if (array_key_exists('include', $payload)) {
@@ -85,21 +70,8 @@ class UseDBController extends Controller
 
     public function store($obj)
     {
-        $gates = config('usedb.permissions.gates.' . $obj['collection'] . '.create');
-        if (isEmpty($gates)) {
-            foreach ($gates as $gate) {
-                if (!Gate::allows($gate)) {
-                    return response()->json(["error" => "You are not authorized to create!!!!"]);
-                }
-            }
-        }
-
-
-        $createPolicy = config('usedb.permissions.policies.' . $obj['collection'] . '.create');
-        if ($createPolicy) {
-            if (!Gate::allows($createPolicy, $this->modelClass)) {
-                return response()->json(["error" => "You are not authorized to creates"]);
-            }
+        if (!($this->permission($obj, null, 'create') && $this->policies($obj, 'create', $this->modelClass))) {
+            return response()->json(["error" => "You are not authorized"]);
         }
 
         $payload = $obj['payload'];
@@ -130,27 +102,12 @@ class UseDBController extends Controller
 
         $where =  $payload['where'];
         $model = $this->modelClass::where($where)->first();
-
         if (!$model)
             return response()->json(["error" => "Record not found!!"]);
 
-
-        $gates = config('usedb.permissions.gates.' . $obj['collection'] . '.findOne');
-        if (isEmpty($gates)) {
-            foreach ($gates as $gate) {
-                if (!Gate::allows($gate, $model)) {
-                    return response()->json(["error" => "You are not authorized to view the data"]);
-                }
-            }
+        if (!($this->permission($obj, $model, 'findOne') && $this->policies($obj, 'findOne', $model))) {
+            return response()->json(["error" => "You are not authorized"]);
         }
-
-        $createPolicy = config('usedb.permissions.policies.' . $obj['collection'] . '.findOne');
-        if ($createPolicy) {
-            if (!Gate::allows($createPolicy, $model)) {
-                return response()->json(["error" => "You are not authorized to view the data"]);
-            }
-        }
-
 
         if (array_key_exists('include', $payload)) {
             $childClasses = $payload['include'];
@@ -187,7 +144,7 @@ class UseDBController extends Controller
                         array_push($select, $name);
                     }
                 }
-                \Log::info(print_r($select, true));
+
                 $data = $data->map(function ($record) use ($select) {
                     return  $record->only($select);
                 });
@@ -219,23 +176,9 @@ class UseDBController extends Controller
         if (!$model)
             return response()->json(["error" => "Record not found"]);
 
-        $gates = config('usedb.permissions.gates.' . $obj['collection'] . '.update');
-
-        if (isEmpty($gates)) {
-            foreach ($gates as $gate) {
-                if (!Gate::allows($gate, $model)) {
-                    return response()->json(["error" => "You are not authorized"]);
-                }
-            }
+        if (!($this->permission($obj, $model, 'update') && $this->policies($obj, 'update', $model))) {
+            return response()->json(["error" => "You are not authorized"]);
         }
-
-        $updatePolicy = config('usedb.permissions.policies.' . $obj['collection'] . '.update');
-        if ($updatePolicy) {
-            if (!Gate::allows($updatePolicy, $model)) {
-                return response()->json(["error" => "You are not authorized"]);
-            }
-        }
-
 
         $data = $payload['data'];
         foreach ($data as $prop => $value) {
@@ -261,24 +204,37 @@ class UseDBController extends Controller
         if (!$model)
             return response()->json(["error" => "Record not found"]);
 
-        $gates = config('usedb.permissions.gates.' . $obj['collection'] . '.delete');
-        if (isEmpty($gates)) {
-            foreach ($gates as $gate) {
-                if (!Gate::allows($gate, $model)) {
-                    return response()->json(["error" => "You are not authorized!!!"]);
-                }
-            }
+        if (!($this->permission($obj, $model, 'delete') && $this->policies($obj, 'delete', $model))) {
+            return response()->json(["error" => "You are not authorized"]);
         }
-
-        $deletPolicy = config('usedb.permissions.policies.' . $obj['collection'] . '.delete');
-        if ($deletPolicy) {
-            if (!Gate::allows($deletPolicy, $model)) {
-                return response()->json(["error" => "You are not authorized"]);
-            }
-        }
-
 
         $model->delete();
         return response()->json(["message" => "Record deleted successfully"]);
+    }
+
+    public function permission($obj, $model, $gate)
+    {
+
+        $gates = config('usedb.permissions.gates.' . $obj['collection'] . '.' . $gate);
+        if (!$gates) {
+            return true;
+        }
+        foreach ($gates as $gate) {
+            if (!Gate::allows($gate, $model)) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    public function policies($obj, $name, $model)
+    {
+        $policy = config('usedb.permissions.policies.' . $obj['collection'] . '.' . $name);
+        if ($policy) {
+            if (!Gate::allows($policy, $model)) {
+                return false;
+            }
+        }
+        return true;
     }
 }
