@@ -1,6 +1,6 @@
 <?php
 
-namespace UseDB;
+namespace UseDB\Controllers;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
@@ -22,7 +22,6 @@ class UseDBController extends Controller
             case 'findOne':
                 return $this->show($obj);
             case 'update':
-                // return $this->update($obj['payload']);
                 return $this->update($obj);
             case 'delete':
                 return $this->destroy($obj);
@@ -33,6 +32,10 @@ class UseDBController extends Controller
 
     public function findMany($obj)
     {
+        if (!($this->permission($obj, $this->modelClass, 'findMany') && $this->policies($obj, 'findMany', $this->modelClass))) {
+            return response()->json(["error" => "You are not authorized"]);
+        }
+
         $payload = $obj['payload'];
         $errors = [];
         if (!array_key_exists('skip', $payload)) {
@@ -46,25 +49,17 @@ class UseDBController extends Controller
         }
 
         $modelCollection = new $this->modelClass();
-
         if (array_key_exists('where', $payload)) {
             $modelCollection = $this->modelClass::where($payload['where']);
         }
         $total = $modelCollection->count();
-        $modelCollection = $modelCollection->skip($payload['skip'])->take($payload['take']);
 
+        $modelCollection = $modelCollection->skip($payload['skip'])->take($payload['take']);
         $modelCollection = $modelCollection->get();
 
-        if (!($this->permission($obj, $this->modelClass, 'findMany') && $this->policies($obj, 'findMany', $this->modelClass))) {
-            return response()->json(["error" => "You are not authorized"]);
-        }
-
-
-        if (array_key_exists('include', $payload)) {
-            for ($i = 0; $i < count($modelCollection); $i++) {
-                $modelCollection[$i] =  $this->nestedData($payload['include'],  $modelCollection[$i]);
-            }
-        }
+        $readController = new UseDBReadController();
+        $modelCollection = $readController->include($payload, $modelCollection);
+        $modelCollection = $readController->select($payload, $modelCollection);
 
         return response()->json(['data' => $modelCollection, 'pagination' => ['total' => $total]]);
     }
@@ -93,7 +88,6 @@ class UseDBController extends Controller
         return response()->json($model);
     }
 
-
     public function show($obj)
     {
         $payload = $obj['payload'];
@@ -112,55 +106,23 @@ class UseDBController extends Controller
 
         if (array_key_exists('include', $payload)) {
             $childClasses = $payload['include'];
-            $model = $this->nestedData($childClasses, $model);
+            $readController = new UseDBReadController();
+            $model = $readController->nestedData($childClasses, $model);
+            if (array_key_exists('select', $payload)) {
+                $select = $payload['select'];
+                foreach ($payload['include'] as $name => $value) {
+                    array_push($select, $name);
+                }
+                $model = $model->only($select);
+            }
         }
 
         return response()->json($model);
     }
 
-
-
-    public function nestedData($childClasses, $model)
-    {
-
-        foreach ($childClasses as $childClassName => $props) {
-            $data = $model->$childClassName();
-
-            if (array_key_exists('where', $props)) {
-                $where = $props['where'];
-                $data = $data->where($where);
-            }
-            $data = $data->get();
-
-            if (array_key_exists('include', $props)) {
-                for ($i = 0; $i < count($data); $i++) {
-                    $data[$i] =  $this->nestedData($props['include'],  $data[$i]);
-                }
-            }
-
-            if (array_key_exists('select', $props)) {
-                $select = $props['select'];
-                if (array_key_exists('include', $props)) {
-                    foreach ($props['include'] as $name => $value) {
-                        array_push($select, $name);
-                    }
-                }
-
-                $data = $data->map(function ($record) use ($select) {
-                    return  $record->only($select);
-                });
-            }
-
-            $model->$childClassName = $data;
-        }
-        return $model;
-    }
-
-
     public function update($obj)
     {
         $payload = $obj['payload'];
-
         $errors = [];
         if (!array_key_exists('where', $payload)) {
             $errors['where']  = 'where field in payload is required';
@@ -215,7 +177,6 @@ class UseDBController extends Controller
 
     public function permission($obj, $model, $gate)
     {
-
         $gates = config('usedb.permissions.gates.' . $obj['collection'] . '.' . $gate);
         if (!$gates) {
             return true;

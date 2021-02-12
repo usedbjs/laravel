@@ -1,6 +1,6 @@
 <?php
 
-use UseDB\UseDBController;
+use UseDB\Controllers\UseDBController;
 use Illuminate\Support\Facades\Route;
 
 
