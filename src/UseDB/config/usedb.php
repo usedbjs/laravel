@@ -9,8 +9,6 @@ return [
     'permissions' => [
         'gates' => [
 
-            // structure
-
             // 'modelName' => [
             //     'update' => [],
             //     'delete' => [],
@@ -21,8 +19,6 @@ return [
 
         ],
         'policies' => [
-
-            // structure
 
             // 'modelName' => [
             //     'update' => '',
