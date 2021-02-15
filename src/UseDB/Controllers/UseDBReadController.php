@@ -53,7 +53,8 @@ class UseDBReadController extends Controller
     public function select($props, $data)
     {
         if (array_key_exists('select', $props)) {
-            $select = $props['select'];
+            $select = ['id'];
+            $select = array_merge($select, $props['select']);
             if (array_key_exists('include', $props)) {
                 foreach ($props['include'] as $name => $value) {
                     array_push($select, $name);
