@@ -1,10 +1,7 @@
 <?php
 
 return [
-    'middleware' => [
-        'usedb',
-        'model-usedb',
-    ],
+    'middleware' => [],
     "modelPath" => "App\Models\\",
     'permissions' => [
         'gates' => [
