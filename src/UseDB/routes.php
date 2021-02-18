@@ -5,4 +5,4 @@ use Illuminate\Support\Facades\Route;
 
 
 Route::post('/usedb', [UseDBController::class, 'index'])
-    ->middleware(config('usedb.middleware'));
+    ->middleware(['usedb', 'model-usedb'])->middleware(config('usedb.middleware'));

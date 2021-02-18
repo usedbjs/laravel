@@ -109,7 +109,8 @@ class UseDBController extends Controller
             $readController = new UseDBReadController();
             $model = $readController->nestedData($childClasses, $model);
             if (array_key_exists('select', $payload)) {
-                $select = $payload['select'];
+                $select = ['id'];
+                $select = array_merge($select, $payload['select']);
                 foreach ($payload['include'] as $name => $value) {
                     array_push($select, $name);
                 }
